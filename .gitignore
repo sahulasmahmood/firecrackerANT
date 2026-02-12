@@ -40,3 +40,6 @@ backend/public/uploads/
 
 # Mobile (Setup Stage - Not ready for production)
 mobile/
+
+# Reference materials
+references/
