@@ -1,7 +1,7 @@
 const { getS3Object } = require("../../utils/common/imageProxy");
 
 /**
- * Proxy S3 images through backend
+ * Proxy S3 images through backend - DEPRECATED
  * GET /api/image/*
  */
 const proxyImage = async (req, res) => {
@@ -19,20 +19,23 @@ const proxyImage = async (req, res) => {
     // Decode URL-encoded key
     key = decodeURIComponent(key);
 
-    console.log(`📸 Proxying image: ${key}`);
+    console.log(`📸 Proxying image request (Deprecated): ${key}`);
 
-    // Get S3 object
-    const s3Object = await getS3Object(key);
-    
-    // Set response headers - NO CACHE to ensure fresh images
-    res.setHeader('Content-Type', s3Object.ContentType || 'image/jpeg');
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow CORS
-    
-    // Stream the image
-    s3Object.Body.pipe(res);
+    // This will now throw an error as S3 support is removed
+    // We try to catch it and redirect if possible, or just fail
+    try {
+        const s3Object = await getS3Object(key);
+        // ... (unreachable now)
+        s3Object.Body.pipe(res);
+    } catch (e) {
+        // If it looks like a Cloudinary URL, redirect?
+        // But getS3Object takes a key.
+        return res.status(410).json({
+            success: false,
+            message: "Image proxying for S3 is deprecated. Please migrate to Cloudinary.",
+        });
+    }
+
   } catch (error) {
     console.error("Error proxying image:", error);
     res.status(404).json({

@@ -1,73 +1,43 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require("../common/cloudinary");
 const path = require("path");
 const { getProxyImageUrl } = require("../common/imageProxy");
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "eu-north-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
-
-const S3_BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || "mnt-ecommerce-2025";
-
 /**
- * Upload file to S3
+ * Upload file to Cloudinary (Replaces S3)
  * @param {Buffer} fileBuffer - File buffer
  * @param {string} fileName - Original file name
  * @param {string} mimeType - File MIME type
- * @returns {Promise<string>} - S3 file key
+ * @returns {Promise<string>} - Cloudinary Secure URL
  */
 const uploadToS3 = async (fileBuffer, fileName, mimeType) => {
   try {
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 15);
-    const fileExtension = path.extname(fileName);
-    const uniqueFileName = `items/${timestamp}-${randomString}${fileExtension}`;
-
-    const command = new PutObjectCommand({
-      Bucket: S3_BUCKET_NAME,
-      Key: uniqueFileName,
-      Body: fileBuffer,
-      ContentType: mimeType,
-    });
-
-    await s3Client.send(command);
-    console.log(`✅ File uploaded to S3: ${uniqueFileName}`);
-    return uniqueFileName;
+    const result = await uploadToCloudinary(fileBuffer, 'items');
+    console.log(`✅ File uploaded to Cloudinary: ${result.secure_url}`);
+    return result.secure_url;
   } catch (error) {
-    console.error("❌ Error uploading to S3:", error);
-    throw new Error("Failed to upload file to S3");
+    console.error("❌ Error uploading to Cloudinary:", error);
+    throw new Error("Failed to upload file to Cloudinary");
   }
 };
 
 /**
- * Delete file from S3
- * @param {string} fileKeyOrUrl - S3 file key or full URL
+ * Delete file from Cloudinary (Replaces S3)
+ * @param {string} fileKeyOrUrl - Cloudinary URL
  * @returns {Promise<boolean>}
  */
 const deleteFromS3 = async (fileKeyOrUrl) => {
   try {
-    let key = fileKeyOrUrl;
-    
-    if (fileKeyOrUrl.includes("amazonaws.com/")) {
-      key = fileKeyOrUrl.split("amazonaws.com/")[1].split("?")[0];
-    } else if (fileKeyOrUrl.startsWith("http://") || fileKeyOrUrl.startsWith("https://")) {
-      const url = new URL(fileKeyOrUrl);
-      key = url.pathname.substring(1);
+    const publicId = getPublicIdFromUrl(fileKeyOrUrl);
+    if (!publicId) {
+      console.log("⚠️ Invalid Cloudinary URL or file not found, skipping delete:", fileKeyOrUrl);
+      return false;
     }
 
-    const command = new DeleteObjectCommand({
-      Bucket: S3_BUCKET_NAME,
-      Key: key,
-    });
-
-    await s3Client.send(command);
-    console.log(`✅ File deleted from S3: ${key}`);
+    await deleteFromCloudinary(publicId);
+    console.log(`✅ File deleted from Cloudinary: ${publicId}`);
     return true;
   } catch (error) {
-    console.error("❌ Error deleting from S3:", error);
+    console.error("❌ Error deleting from Cloudinary:", error);
     return false;
   }
 };

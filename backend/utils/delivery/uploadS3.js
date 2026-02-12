@@ -1,21 +1,11 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require("../common/cloudinary");
 const multer = require("multer");
 require("dotenv").config();
 
-console.log("AWS S3 Config (Delivery):", {
-  region: process.env.AWS_REGION,
-  bucket: process.env.AWS_S3_BUCKET_NAME,
-  hasAccessKey: !!process.env.AWS_ACCESS_KEY_ID,
-  hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
-});
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "eu-north-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
+console.log("Cloudinary Config (Delivery):", {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  hasApiKey: !!process.env.CLOUDINARY_API_KEY,
+  hasApiSecret: !!process.env.CLOUDINARY_API_SECRET,
 });
 
 const storage = multer.memoryStorage();
@@ -55,26 +45,13 @@ const uploadDocument = multer({
 });
 
 const uploadToS3 = async (file, folder = "delivery-partners", subfolder = "") => {
-  const timestamp = Date.now();
-  const sanitizedFileName = file.originalname.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9.-]/g, "");
-  const folderPath = subfolder ? `${folder}/${subfolder}` : folder;
-  const fileName = `${folderPath}/${timestamp}-${sanitizedFileName}`;
-  
-  const bucketName = process.env.AWS_S3_BUCKET_NAME || "mnt-ecommerce-2025";
-
-  const params = {
-    Bucket: bucketName,
-    Key: fileName,
-    Body: file.buffer,
-    ContentType: file.mimetype,
-  };
-
   try {
-    await s3Client.send(new PutObjectCommand(params));
-    return fileName;
+    const folderPath = subfolder ? `${folder}/${subfolder}` : folder;
+    const result = await uploadToCloudinary(file.buffer, folderPath);
+    return result.secure_url;
   } catch (error) {
-    console.error("Error uploading to S3:", error);
-    throw new Error(`Failed to upload file to S3: ${error.message}`);
+    console.error("Error uploading to Cloudinary:", error);
+    throw new Error(`Failed to upload file to Cloudinary: ${error.message}`);
   }
 };
 
@@ -108,59 +85,21 @@ const uploadIdProofToS3 = async (file, partnerId) => {
 
 const deleteFromS3 = async (fileUrl) => {
   try {
-    let key = fileUrl;
-    if (fileUrl.includes("amazonaws.com/")) {
-      key = fileUrl.split("amazonaws.com/")[1].split("?")[0];
+    const publicId = getPublicIdFromUrl(fileUrl);
+    if (!publicId) {
+       console.log("Invalid Cloudinary URL or file not found, skipping delete:", fileUrl);
+       return true; // Treat as success
     }
-
-    const bucketName = process.env.AWS_S3_BUCKET_NAME || "mnt-ecommerce-2025";
-
-    await s3Client.send(new DeleteObjectCommand({
-      Bucket: bucketName,
-      Key: key,
-    }));
-    
+    await deleteFromCloudinary(publicId);
     return true;
   } catch (error) {
-    console.error("Error deleting from S3:", error);
-    throw new Error(`Failed to delete file from S3: ${error.message}`);
+    console.error("Error deleting from Cloudinary:", error);
+    throw new Error(`Failed to delete file from Cloudinary: ${error.message}`);
   }
 };
 
 const getPresignedUrl = async (key, expiresIn = 3600) => {
-  if (!key) return null;
-  
-  if (key.includes('X-Amz-Algorithm') || key.includes('X-Amz-Signature')) {
-    return key;
-  }
-  
-  if (key.startsWith('http://') || key.startsWith('https://')) {
-    const bucketName = process.env.AWS_S3_BUCKET_NAME || "mnt-ecommerce-2025";
-    const region = process.env.AWS_REGION || "eu-north-1";
-    const s3UrlPattern = new RegExp(`https://${bucketName}\\.s3\\.${region}\\.amazonaws\\.com/([^?]+)`);
-    const match = key.match(s3UrlPattern);
-    
-    if (match) {
-      key = decodeURIComponent(match[1]);
-    } else {
-      return key;
-    }
-  }
-  
-  const bucketName = process.env.AWS_S3_BUCKET_NAME || "mnt-ecommerce-2025";
-  
-  try {
-    const command = new GetObjectCommand({
-      Bucket: bucketName,
-      Key: key,
-    });
-    
-    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
-    return presignedUrl;
-  } catch (error) {
-    console.error("Error generating pre-signed URL:", error);
-    return null;
-  }
+  return key; // Return as is for Cloudinary
 };
 
 module.exports = {
