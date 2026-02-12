@@ -4,9 +4,9 @@ import { generatePageMetadata } from '@/lib/seo';
 export async function generateMetadata() {
   return await generatePageMetadata({
     pagePath: "/cart",
-    defaultTitle: "Shopping Cart | Leats - Fresh Groceries & Daily Essentials",
-    defaultDescription: "Review your shopping cart and proceed to checkout. Get fresh groceries and daily essentials delivered to your doorstep with fast delivery.",
-    defaultKeywords: "shopping cart, checkout, groceries, online shopping, delivery",
+    defaultTitle: "Enquiry List | Leats - Firecrackers & Festive Essentials",
+    defaultDescription: "Review your enquiry list and request a quotation. Get the best prices for firecrackers and festive essentials.",
+    defaultKeywords: "enquiry list, quotation, firecrackers, bulk order, crackers price list",
   });
 }
 
