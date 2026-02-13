@@ -1,11 +1,10 @@
 'use client';
 
-import Header from '@/components/Home/Header';
+import { LumeraNavigation } from '@/components/Lumera/LumeraNavigation';
+import { LumeraFooter } from '@/components/Lumera/LumeraFooter';
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
-import Footer01 from '@/components/Home/Footer01';
-import Footer02 from '@/components/Home/Footer02';
 import { useAuthContext } from "@/components/providers/auth-provider";
 import type { Category } from '@/services/online-services/frontendCategoryService';
 import type { WebSettings, CompanySettings } from '@/services/online-services/webSettingsService';
@@ -39,20 +38,18 @@ export function AppLayout({ children, userId, categories, webSettings, companySe
     <ErrorBoundary>
       <CartProvider>
         <WishlistProvider>
-          <div className="min-h-screen bg-background flex flex-col">
-            <Header 
+          <div className="min-h-screen bg-white flex flex-col font-sans">
+            <LumeraNavigation 
               key={headerKey} 
-              initialCategories={categories}
-              initialWebSettings={webSettings}
-              initialPromotionalOffers={promotionalOffers}
+              categories={categories}
+              webSettings={webSettings}
+              companySettings={companySettings}
+              promotionalOffers={promotionalOffers}
             />
             <main className="flex-1">{children}</main>
-            <Footer01 
-              initialWebSettings={webSettings}
-              initialCompanySettings={companySettings}
-            />
-            <Footer02 
-              initialCompanySettings={companySettings}
+            <LumeraFooter 
+              webSettings={webSettings}
+              companySettings={companySettings}
             />
           </div>
         </WishlistProvider>

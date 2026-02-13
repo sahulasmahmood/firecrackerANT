@@ -1,10 +1,8 @@
-import HeroSection from '@/components/Home/HeroSection';
-import PopularProducts from '@/components/Home/PopularProducts';
-import DealsSection from '@/components/Home/DealsSection';
-import MidBannerCategory from '@/components/Home/MidBannerCategory';
-import TrendingProducts from '@/components/Home/TrendingProducts';
-import NewArrivalProducts from '@/components/Home/NewArrivalProducts';
-import HotDealsProducts from '@/components/Home/HotDealsProducts';
+import { HeroSection } from '@/components/Lumera/Sections/HeroSection';
+import { FeaturedProductsSection } from '@/components/Lumera/Sections/FeaturedProducts';
+import { NewArrivalsSection } from '@/components/Lumera/Sections/NewArrivals';
+import { EditorialSection } from '@/components/Lumera/Sections/Editorial';
+import { NewsletterSection } from '@/components/Lumera/Sections/Newsletter';
 import { generatePageMetadata } from '@/lib/seo';
 import { 
   fetchBanners, 
@@ -36,16 +34,25 @@ export default async function Home() {
     <div className="min-h-screen bg-white">
       <HeroSection banners={banners} />
       
-      <PopularProducts 
+      <FeaturedProductsSection 
         initialProducts={bestsellerProducts} 
-        categories={categories} 
+        categories={categories}
+        title="Best Sellers"
+        subtitle="Our most popular products this week"
       />
-      <DealsSection categories={categories} />
-      <NewArrivalProducts products={newArrivalProducts} />
-      <HotDealsProducts products={hotDealsProducts} />
       
-      <MidBannerCategory />
-      <TrendingProducts products={trendingProducts} />
+      <NewArrivalsSection products={newArrivalProducts} />
+      
+      <EditorialSection />
+      
+      <FeaturedProductsSection 
+        initialProducts={trendingProducts} 
+        categories={categories}
+        title="Trending Now"
+        subtitle="What everyone is talking about"
+      />
+
+      <NewsletterSection />
     </div>
   );
 }

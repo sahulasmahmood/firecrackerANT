@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
@@ -9,15 +9,21 @@ import NotificationProviderWrapper from "@/components/NotificationProviderWrappe
 import { Toaster } from "sonner";
 import FaviconUpdater from "@/components/FaviconUpdater";
 
-const poppins = Poppins({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-poppins",
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "ECommerce App",
-  description: "Modern ecommerce application with authentication",
+  title: "Lumera — Modern Living Store",
+  description: "Discover handpicked products made just for you.",
 };
 
 export default function RootLayout({
@@ -29,7 +35,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
      
       <body
-        className={`${poppins.variable} font-sans antialiased`}
+        className={`${inter.variable} ${playfair.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <FaviconUpdater />
